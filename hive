@@ -1,0 +1,93 @@
+OOM:
+https://docs.qubole.com/en/latest/troubleshooting-guide/hive-ts/troubleshoot-hive.html
+
+Hive GC overhead limit exceeded
+Last updated Sat Apr 18 2020
+Hive GC overhead limit exceeded
+When using Hive queries on input data presented in ORC format, sometimes when generating splits information the problem of Out of Memory appears. Similar to the following:
+
+java.sql.SQLException: Error while processing statement: FAILED: Execution Error, return code 2 from org.apache.hadoop.hive.ql.exec.tez.TezTask. Vertex failed, vertexName=Map 11, vertexId=vertex_1579804408949_99772_1_08, diagnostics=[Vertex vertex_1579804408949_99772_1_08 [Map 11] killed/failed due to:ROOT_INPUT_INIT_FAILURE, Vertex Input: g initializer failed, vertex=vertex_1579804408949_99772_1_08 [Map 11], java.lang.RuntimeException: serious problem
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat.generateSplitsInfo(OrcInputFormat.java:1277)
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat.getSplits(OrcInputFormat.java:1304)
+ at org.apache.hadoop.hive.ql.io.HiveInputFormat.addSplitsForGroup(HiveInputFormat.java:312)
+ 
+ at org.apache.hadoop.hive.ql.io.HiveInputFormat.getSplits(HiveInputFormat.java:414)
+ at org.apache.hadoop.hive.ql.exec.tez.HiveSplitGenerator.initialize(HiveSplitGenerator.java:155)
+ at org.apache.tez.dag.app.dag.RootInputInitializerManager$InputInitializerCallable$1.run(RootInputInitializerManager.java:273)
+ at org.apache.tez.dag.app.dag.RootInputInitializerManager$InputInitializerCallable$1.run(RootInputInitializerManager.java:266)
+ at java.security.AccessController.doPrivileged(Native Method)
+ at javax.security.auth.Subject.doAs(Subject.java:422)
+ at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1869)
+ at org.apache.tez.dag.app.dag.RootInputInitializerManager$InputInitializerCallable.call(RootInputInitializerManager.java:266)
+ at org.apache.tez.dag.app.dag.RootInputInitializerManager$InputInitializerCallable.call(RootInputInitializerManager.java:253)
+ at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+ at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+ at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+ at java.lang.Thread.run(Thread.java:748)
+Caused by: java.util.concurrent.ExecutionException: java.lang.OutOfMemoryError: GC overhead limit exceeded
+ at java.util.concurrent.FutureTask.report(FutureTask.java:122)
+ at java.util.concurrent.FutureTask.get(FutureTask.java:192)
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat.generateSplitsInfo(OrcInputFormat.java:1272)
+ ... 15 more
+Caused by: java.lang.OutOfMemoryError: GC overhead limit exceeded
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$ColumnStatistics$1.parsePartialFrom(OrcProto.java:5005)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$ColumnStatistics$1.parsePartialFrom(OrcProto.java:5000)
+ at com.google.protobuf.CodedInputStream.readMessage(CodedInputStream.java:309)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$StripeStatistics.<init>(OrcProto.java:14334)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$StripeStatistics.<init>(OrcProto.java:14281)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$StripeStatistics$1.parsePartialFrom(OrcProto.java:14370)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$StripeStatistics$1.parsePartialFrom(OrcProto.java:14365)
+ at com.google.protobuf.CodedInputStream.readMessage(CodedInputStream.java:309)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$Metadata.<init>(OrcProto.java:15008)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$Metadata.<init>(OrcProto.java:14955)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$Metadata$1.parsePartialFrom(OrcProto.java:15044)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$Metadata$1.parsePartialFrom(OrcProto.java:15039)
+ at com.google.protobuf.AbstractParser.parseFrom(AbstractParser.java:89)
+ at com.google.protobuf.AbstractParser.parseFrom(AbstractParser.java:95)
+ at com.google.protobuf.AbstractParser.parseFrom(AbstractParser.java:49)
+ at org.apache.hadoop.hive.ql.io.orc.OrcProto$Metadata.parseFrom(OrcProto.java:15176)
+ at org.apache.hadoop.hive.ql.io.orc.ReaderImpl.extractMetadata(ReaderImpl.java:468)
+ at org.apache.hadoop.hive.ql.io.orc.OrcTail.getMetadata(OrcTail.java:131)
+ at org.apache.hadoop.hive.ql.io.orc.ReaderImpl.<init>(ReaderImpl.java:332)
+ at org.apache.hadoop.hive.ql.io.orc.OrcFile.createReader(OrcFile.java:241)
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat$SplitGenerator.populateAndCacheStripeDetails(OrcInputFormat.java:1122)
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat$SplitGenerator.callInternal(OrcInputFormat.java:1014)
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat$SplitGenerator.access$2000(OrcInputFormat.java:851)
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat$SplitGenerator$1.run(OrcInputFormat.java:1005)
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat$SplitGenerator$1.run(OrcInputFormat.java:1002)
+ at java.security.AccessController.doPrivileged(Native Method)
+ at javax.security.auth.Subject.doAs(Subject.java:422)
+ at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1869)
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat$SplitGenerator.call(OrcInputFormat.java:1002)
+ at org.apache.hadoop.hive.ql.io.orc.OrcInputFormat$SplitGenerator.call(OrcInputFormat.java:851)
+ at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+ at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+Let us walk through the basic concepts of ORC to understand the essence of this phenomenon.
+
+ORC File Basics
+ORC is a column-oriented data storage format for the Apache Hadoop ecosystem. It is compatible with most large data processing tools in the Apache Hadoop environment and is similar to other RCFile and Parquet columnar formats. We have already reviewed the file formats.
+
+ORC files are completely self-describing and are not dependent on Hive metastore or any other external metadata. The file includes all information about the type and encoding of the objects stored in the file. Since the file is self-contained, it is independent of the user's environment for proper interpretation of the file content.
+An ORC file consists of data groups called stripes, along with auxiliary information in the file footer. The large size of stripes makes it possible to read data from HDFS efficiently.
+
+Inside the stripes, the columns are separated from each other, allowing the selective reading of the data, guaranteeing high processing speed. Predicates and indexes allow you to determine which stripes in the file should be read for a particular request, and indexes narrow the search area to a row group (10k rows), further increasing the speed of reading information. The indexes are constructed on each of the columns that affect the speed of reading, increasing the overall size.
+
+At the end of the file, the postscript contains the compression options and the size of the compressed footer. The footer of the file contains a list of stripes in the file, the number of rows on stripe and the data type of each column and various metadata.
+
+
+Split calculation
+It's always a very challenging piece because it happens before your process actually starts so it's happening on the client before you actually get going. There are three strategies it's actually two but I'll
+
+Hive's OrcInputFormat has three(basically two) strategies for split calculation:
+
+BI — it is set for small fast queries where you don't want to spend very much time in split calculations and it just reads the blocks and splits blindly based on HDFS blocks and it deals with it after that
+
+ETL — is for large queries that one it actually reads the file footers and applies the approach down predicate to the strike that can make a huge difference
+
+Hybrid — if there's a lot of small or if there are lots of small files or there's a lot of files that will use the BI strategy otherwise it will use ETL
+
+The Out of Memory error could occur because of using the default split strategy (Hybrid), which in my case redirects to ETL strategy that requires more memory.
+
+I recommend using the ORC split strategy as BI by setting the parameter below:
+
+hive.exec.orc.split.strategy=BI
